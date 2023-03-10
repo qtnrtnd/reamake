@@ -1,4 +1,5 @@
 import readline from "readline";
+import ansiEscapes from "ansi-escapes";
 
 const mainMenuKey = function (key) {
   return key.name === 'm' && key.meta;
@@ -15,24 +16,48 @@ const keyPress = {
   }
 }
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+keyPress.listen((chunk, key) => {
+  if (key.ctrl && key.name === 'c') process.exit(0);
 });
 
-rl.on('SIGINT', () => {
-  process.exit(0);
-});
+const rl = new class {
+  constructor() {
+    this.disableTerminal();
+  }
+  enableTerminal() {
+    this.value.close();
+    this.value = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true
+    });
+    process.stdout.write(ansiEscapes.cursorShow);
+  };
+  disableTerminal() {
+    this.value?.close();
+    this.value = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false
+    });
+    process.stdout.write(ansiEscapes.cursorHide);
+  };
+}
 
-const mainMenuKeyPress = function () {
-  return new Promise(resolve => {
+const mainMenuKeyPress = function (callback = undefined) {
+  return new Promise(async resolve => {
     const keyPressHandler = function (chunk, key) {
       if (mainMenuKey(key)) {
         keyPress.stopListening(keyPressHandler);
-        resolve()
+        resolve(EXIT_FUNCTION);
       }
     }
     keyPress.listen(keyPressHandler);
+    if (callback) {
+      const r = await callback();
+      keyPress.stopListening(keyPressHandler);
+      resolve(r);
+    }
   })
 }
 

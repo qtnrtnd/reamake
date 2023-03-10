@@ -1,11 +1,15 @@
+import { ressourcesPath } from "../index.js";
+
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { resolve as pathResolve } from "path";
+import { resolve as pathResolve, join } from "path";
 import c from "ansi-colors";
 
-const rawSettings = new Proxy(JSON.parse(readFileSync('./settings.json')), {
+const settingsPath = pathResolve('res/settings.json');
+
+const rawSettings = new Proxy(JSON.parse(readFileSync(settingsPath)), {
   set(target, prop, value) {
     target[prop] = value;
-    writeFileSync(pathResolve('./settings.json'), JSON.stringify(target, undefined, '\t'), 'utf8');
+    writeFileSync(settingsPath, JSON.stringify(target, undefined, '\t'), 'utf8');
     return true;
   }
 });
@@ -20,13 +24,13 @@ settings.reaperDir = function() {
       const reaperId = splitted.reverse().indexOf('REAPER');
       if (reaperId >= 0) {
         path = join(...splitted.slice(reaperId).reverse());
-        console.log(c.gray(`Reaper directory path automatically set to "${path}".\nYou can change it in "${pathResolve('../settings.json')}".`));
+        process.stdout.write(c.gray(`Reaper directory path automatically set to "${path}".\nYou can change it in "${settingsPath}".\n`));
       } else {
         let validPath = false
         while (!validPath) {
-          path = await prompt.ask('Please enter your Reaper directory path: ');
+          path = await prompt('Please enter your Reaper directory path: ');
           if (existsSync(path)) validPath = true;
-          else console.log(c.red(`"${path}" not found.`));
+          else process.stdout.write(c.red(`"${path}" not found.\n`));
         }
       }
       rawSettings.reaperDir = path;

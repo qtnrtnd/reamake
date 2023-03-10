@@ -2,11 +2,11 @@ import settings from "./modules/settings.js";
 import { missing } from "./modules/errors.js";
 import { f, date, isSubdirectory } from "./modules/utilities.js";
 import { selectMenu, header } from "./modules/components.js";
-import { keyPress, mainMenuKey, mainMenuKeyPress } from "./modules/events.js";
+import { mainMenuKeyPress } from "./modules/events.js";
 
 import { readdirSync, lstatSync, readFileSync, existsSync } from "fs";
 import { extname, relative, dirname, join, sep } from "path";
-import Watcher from "watcher";
+import Watcher from "@qtnrtnd/watcher";
 import AdmZip from "adm-zip";
 import c from "ansi-colors";
 
@@ -41,9 +41,9 @@ const liveArchiver = function (name) {
     });
   
     if (themes.length > 0) {
-      console.log("Select a Reaper theme to watch:");
+      process.stdout.write("Select a Reaper theme to watch:\n");
       const themeName = await selectMenu(themes);
-      if (themeName === REAMAKE.EXIT_FUNCTION) {
+      if (themeName === EXIT_FUNCTION) {
         goToMainMenu();
         return;
       }
@@ -70,7 +70,7 @@ const liveArchiver = function (name) {
         }
         zip.writeZip(zipPath);
         if (notice)
-          console.log(c.gray(`"${themeName}.ReaperThemeZip" has been updated.`));
+          process.stdout.write(c.gray(`"${themeName}.ReaperThemeZip" has been updated.\n`));
       };
       writeZip(false);
   
@@ -84,7 +84,7 @@ const liveArchiver = function (name) {
       });
   
       watcher.on("ready", () => {
-        console.log(`\nWatching "${themeDir}". Waiting for changes...\n`);
+        process.stdout.write(`\nWatching "${themeDir}". Waiting for changes...\n\n`);
       });
       watcher.on("all", (event, path, newPath) => {
         if (
@@ -97,11 +97,11 @@ const liveArchiver = function (name) {
           if (event === "renameDir") {
             if (!renamedDir) {
               renamedDir = path;
-              console.log(`${date()} ${c.yellow("renamed")} "${rel + sep}" → "${relNew + sep}"`);
+              process.stdout.write(`${date()} ${c.yellow("renamed")} "${rel + sep}" → "${relNew + sep}"\n`);
             }
           } else if (event === "rename") {
             if (!renamedDir || !isSubdirectory(path, renamedDir)) {
-              console.log(`${date()} ${c.yellow("renamed")} "${rel}" → "${relNew}"`);
+              process.stdout.write(`${date()} ${c.yellow("renamed")} "${rel}" → "${relNew}"\n`);
             }
             const file = zip.getEntry(f(rel));
             zip.addFile(f(relNew), file.getData());
@@ -110,27 +110,27 @@ const liveArchiver = function (name) {
           } else if (event === "unlinkDir") {
             if (!removedDir) {
               removedDir = path;
-              console.log(`${date()} ${c.red("removed")} "${rel + sep}"`);
+              process.stdout.write(`${date()} ${c.red("removed")} "${rel + sep}"\n`);
             }
           } else if (event === "unlink") {
             if (!removedDir || !isSubdirectory(path, removedDir)) {
-              console.log(`${date()} ${c.red("removed")} "${rel}"`);
+              process.stdout.write(`${date()} ${c.red("removed")} "${rel}"\n`);
             }
             zip.deleteFile(f(rel));
           } else if (event === 'addDir') {
             if (!addedDir) {
               addedDir = path;
-              console.log(`${date()} ${c.green("added")} "${rel + sep}"`);
+              process.stdout.write(`${date()} ${c.green("added")} "${rel + sep}"\n`);
             }
           } else if (event === "add") {
             if (!addedDir || !isSubdirectory(path, addedDir)) {
-              console.log(`${date()} ${c.green("added")} "${rel}"`);
+              process.stdout.write(`${date()} ${c.green("added")} "${rel}"\n`);
             }
             const zipFileDir = f(dirname(rel));
             zip.addLocalFile(path, zipFileDir !== "." ? zipFileDir : undefined);
             zip.getEntry(f(rel)).header.method = 0;
           } else if (event === "change") {
-            console.log(`${date()} ${c.yellow("modified")} "${rel}"`);
+            process.stdout.write(`${date()} ${c.yellow("modified")} "${rel}"\n`);
             zip.updateFile(f(rel), readFileSync(path));
           }
           clearTimeout(timer);
@@ -141,7 +141,7 @@ const liveArchiver = function (name) {
       await mainMenuKeyPress();
       watcher.close();
     } else {
-      console.log(c.yellow(`No unpacked Reaper theme found in "${colorThemesDir}".`));
+      process.stdout.write(c.yellow(`No unpacked Reaper theme found in "${colorThemesDir}".\n`));
       await mainMenuKeyPress();
     }
     goToMainMenu();

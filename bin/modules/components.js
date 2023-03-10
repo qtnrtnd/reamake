@@ -1,19 +1,29 @@
-import { rl, mainMenuKey } from "./events.js";
-import { keyPress } from "./events.js";
-import c from "ansi-colors";
+import meta from "./meta.js";
+import { rl, mainMenuKey, keyPress, mainMenuKeyPress } from "./events.js";
 
-const prompt = function (str = '') {
-  return new Promise(resolve => rl.question(str, resolve));
+import c from "ansi-colors";
+import ansiEscapes from "ansi-escapes";
+
+const prompt = async function (str = '') {
+  rl.enableTerminal();
+  const r = await mainMenuKeyPress(() => {
+    return new Promise(resolve => rl.value.question(str, (ans) => {
+      resolve(ans);
+    }));
+  });
+  rl.disableTerminal();
+  return r;
 }
 
 const selectMenu = function (items, selected = 0, blockMainMenuEvent = false) {
-  console.capture.stop();
+  let menuExists = false;
   function writeMenu(it, s) {
-    console.clear()
-    console.capture.log()
+    if (menuExists) {
+      process.stdout.write(ansiEscapes.eraseLines(items.length + 1));
+    } else menuExists = true;
     it.forEach((i, j) => {
       const selected = s === j
-      console.log(c[selected ? 'white' : 'gray'](`${selected ? '→ ' : '  '}${i}`))
+      process.stdout.write(c[selected ? 'white' : 'gray'](`${selected ? '→ ' : '  '}${i}\n`))
     })
   }
   writeMenu(items, selected)
@@ -21,14 +31,12 @@ const selectMenu = function (items, selected = 0, blockMainMenuEvent = false) {
     const keyPressHandler = function (chunk, key) {
       if (!blockMainMenuEvent && mainMenuKey(key)) {
         keyPress.stopListening(keyPressHandler);
-        resolve(REAMAKE.EXIT_FUNCTION)
+        resolve(EXIT_FUNCTION)
       }else if (key.name === 'up' || key.name === 'down') {
         selected = Math.mod(selected + (key.name === 'up' ? -1 : 1), items.length);
         writeMenu(items, selected)
       } else if (key.name === 'return') {
         keyPress.stopListening(keyPressHandler);
-        process.stdout.write('\u001b[1A');
-        console.capture.start();
         resolve(items[selected]);
       }
     }
@@ -37,7 +45,8 @@ const selectMenu = function (items, selected = 0, blockMainMenuEvent = false) {
 }
 
 const header = function (str) {
-  console.log(`${c.white.bgCyan(' ReaMake 1.0.0 ')}${c.black.bgWhite(` ${str} \n`)}${c.gray('Main Menu: Alt+M | Exit: Ctrl+C\n')}`);
+
+  process.stdout.write(`${c.white.bgCyan(` ${meta.name} ${meta.version} `)}${c.black.bgWhite(` ${str} \n`)}${c.gray('Main Menu: Alt+M | Exit: Ctrl+C')}\n\n`);
 }
 
 export { prompt, selectMenu, header };

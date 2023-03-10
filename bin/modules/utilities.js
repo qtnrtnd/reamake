@@ -1,4 +1,4 @@
-import { relative, isAbsolute } from "path"
+import { relative, isAbsolute, resolve, join } from "path"
 
 const f = function (path) {
   return path.replace(/\\/g, '/');
