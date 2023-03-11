@@ -62,6 +62,7 @@ const mainMenuKeyPress = function (callback) {
 };
 
 const anyKeyPress = function () {
+  process.stdout.write('\nPress any key to return to the main menu.');
   return new Promise(async resolve => {
     const keyPressHandler = function () {
       keyPress.stopListening(keyPressHandler);

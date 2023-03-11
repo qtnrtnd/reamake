@@ -5,7 +5,7 @@
 		"build-cjs": "esbuild bin/index.js --minify --bundle --platform=node --outfile=dist/bundle.cjs",
 		"build-pkg": "pkg dist/bundle.cjs --o temp/app -t latest-win --compress GZip",
 		"copy-assets": "copyfiles -u 1 bin/res/**/* temp",
-		"build": "node generate-package && rimraf build && yarn build-cjs && yarn build-pkg && yarn copy-assets && node zip-build && rimraf temp"
+		"build": "node scripts/generate-package && node scripts/reset-res && rimraf build && yarn build-cjs && yarn build-pkg && yarn copy-assets && node scripts/zip-build && rimraf temp"
 	},
 	"author": "",
 	"license": "ISC",

@@ -1,3 +1,4 @@
+import { root } from "./proto.js";
 import { prompt } from "./components.js";
 import { cantFound, cantWrite } from "./errors.js"
 
@@ -9,7 +10,7 @@ const defaultSettings = {
   reaperDir: ''
 };
 
-const settingsPath = pathResolve('res/settings.json');
+const settingsPath = join(root, 'res', 'settings.json');
 let data;
 
 try {
@@ -18,31 +19,32 @@ try {
   data = defaultSettings;
 }
 
-const rawSettings = new Proxy(data, {
+const proxySettings = new Proxy(data, {
   set(target, prop, data) {
     target[prop] = data.value;
     if (data.mess) process.stdout.write(data.mess + '\n');
-    try {
-      writeFileSync(settingsPath, JSON.stringify(target, undefined, '\t'), 'utf8');
-      if (data.messOnSuccess) process.stdout.write(data.messOnSuccess + '\n');
-    } catch {
-      cantWrite(settingsPath, 'Settings could not be saved.');
+    if (prop === 'reaperDir') {
+      try {
+        writeFileSync(settingsPath, JSON.stringify(target, undefined, '\t'), 'utf8');
+        if (data.messOnSuccess) process.stdout.write(data.messOnSuccess + '\n');
+      } catch {
+        cantWrite(settingsPath, 'Settings could not be saved.');
+      }
     }
     return true;
   }
 });
 
-const settings = Object.assign({}, rawSettings)
-const { reaperDir } = rawSettings;
+const settings = Object.assign({}, data)
 
 settings.reaperDir = function() {
   return new Promise(async (resolve) => {
-    if (reaperDir) resolve(reaperDir);
+    if (proxySettings.reaperDir) resolve(proxySettings.reaperDir);
     else {
       let path;
       let mess;
       let messOnSuccess;
-      const splitted = pathResolve('./').split(sep);
+      const splitted = root.split(sep);
       const reaperId = splitted.reverse().indexOf('REAPER');
       if (reaperId >= 0) {
         path = join(...splitted.slice(reaperId).reverse());
@@ -58,7 +60,7 @@ settings.reaperDir = function() {
           } else cantFound(path);
         }
       }
-      rawSettings.reaperDir = {
+      proxySettings.reaperDir = {
         value: path,
         mess,
         messOnSuccess
@@ -69,4 +71,4 @@ settings.reaperDir = function() {
   })
 }
 
-export default settings;
+export { settings, defaultSettings, settingsPath };

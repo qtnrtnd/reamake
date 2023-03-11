@@ -1,19 +1,14 @@
 import { nanoid } from "nanoid";
-import { accessSync, constants } from "fs";
-import { resolve } from "path";
+import { dirname, basename, resolve } from "path";
 
 Math.__proto__.mod = function (a, b) {
   return ((a % b) + b) % b;
 }
 
-// let readOnly = false;
-
-// try {
-//   accessSync(resolve('../res'), constants.W_OK);
-// } catch {
-//   readOnly = true;
-// }
+const root = basename(dirname(process.argv[1])) === 'scripts' ? resolve('bin') : (process.pkg ? dirname(process.execPath) : process.cwd())
 
 Object.assign(global, {
   EXIT_FUNCTION: nanoid()
 });
+
+export { root };

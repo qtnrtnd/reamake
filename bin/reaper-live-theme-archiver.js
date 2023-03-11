@@ -1,4 +1,4 @@
-import settings from "./modules/settings.js";
+import { settings } from "./modules/settings.js";
 import { missing } from "./modules/errors.js";
 import { f, date, isSubdirectory } from "./modules/utilities.js";
 import { selectMenu, header } from "./modules/components.js";
@@ -14,12 +14,11 @@ const liveArchiver = function (name) {
   return new Promise(async goToMainMenu => {
     header(name);
     const reaperDir = await settings.reaperDir();
-    const colorThemesDir = join(reaperDir, "/ColorThemes");
+    const colorThemesDir = join(reaperDir, "ColorThemes");
     const themes = [];
 
     if(!existsSync(colorThemesDir)) {
       missing(colorThemesDir);
-      process.stdout.write('\nPress any key to return to the main menu.')
       await anyKeyPress();
       goToMainMenu();
       return;
@@ -42,7 +41,7 @@ const liveArchiver = function (name) {
     });
   
     if (themes.length > 0) {
-      process.stdout.write("Select a Reaper theme to watch:\n");
+      process.stdout.write("Select a Reaper theme to watch:\n\n");
       const themeName = await selectMenu(themes);
       if (themeName === EXIT_FUNCTION) {
         goToMainMenu();
@@ -80,8 +79,7 @@ const liveArchiver = function (name) {
         renameTimeout: 100,
         recursive: true,
         renameDetection: true,
-        ignoreInitial: true,
-        native: false
+        ignoreInitial: true
       });
   
       watcher.on("ready", () => {
@@ -143,7 +141,6 @@ const liveArchiver = function (name) {
       watcher.close();
     } else {
       process.stdout.write(c.yellow(`No unpacked Reaper theme found in "${colorThemesDir}".\n`));
-      process.stdout.write('\nPress any key to return to the main menu.')
       await anyKeyPress();
     }
     goToMainMenu();
