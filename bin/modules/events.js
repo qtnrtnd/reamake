@@ -3,7 +3,7 @@ import ansiEscapes from "ansi-escapes";
 
 const mainMenuKey = function (key) {
   return key.name === 'm' && key.meta;
-}
+};
 
 const keyPress = {
   listen(callback) {
@@ -42,9 +42,9 @@ const rl = new class {
     });
     process.stdout.write(ansiEscapes.cursorHide);
   };
-}
+};
 
-const mainMenuKeyPress = function (callback = undefined) {
+const mainMenuKeyPress = function (callback) {
   return new Promise(async resolve => {
     const keyPressHandler = function (chunk, key) {
       if (mainMenuKey(key)) {
@@ -58,7 +58,17 @@ const mainMenuKeyPress = function (callback = undefined) {
       keyPress.stopListening(keyPressHandler);
       resolve(r);
     }
-  })
-}
+  });
+};
 
-export { keyPress, rl, mainMenuKey, mainMenuKeyPress };
+const anyKeyPress = function () {
+  return new Promise(async resolve => {
+    const keyPressHandler = function () {
+      keyPress.stopListening(keyPressHandler);
+      resolve();
+    }
+    keyPress.listen(keyPressHandler);
+  });
+};
+
+export { keyPress, rl, mainMenuKey, mainMenuKeyPress, anyKeyPress };

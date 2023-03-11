@@ -1,39 +1,69 @@
-import { ressourcesPath } from "../index.js";
+import { prompt } from "./components.js";
+import { cantFound, cantWrite } from "./errors.js"
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { resolve as pathResolve, join } from "path";
+import { resolve as pathResolve, join, sep } from "path";
 import c from "ansi-colors";
 
-const settingsPath = pathResolve('res/settings.json');
+const defaultSettings = {
+  reaperDir: ''
+};
 
-const rawSettings = new Proxy(JSON.parse(readFileSync(settingsPath)), {
-  set(target, prop, value) {
-    target[prop] = value;
-    writeFileSync(settingsPath, JSON.stringify(target, undefined, '\t'), 'utf8');
+const settingsPath = pathResolve('res/settings.json');
+let data;
+
+try {
+  data = JSON.parse(readFileSync(settingsPath));
+} catch {
+  data = defaultSettings;
+}
+
+const rawSettings = new Proxy(data, {
+  set(target, prop, data) {
+    target[prop] = data.value;
+    if (data.mess) process.stdout.write(data.mess + '\n');
+    try {
+      writeFileSync(settingsPath, JSON.stringify(target, undefined, '\t'), 'utf8');
+      if (data.messOnSuccess) process.stdout.write(data.messOnSuccess + '\n');
+    } catch {
+      cantWrite(settingsPath, 'Settings could not be saved.');
+    }
     return true;
   }
 });
+
 const settings = Object.assign({}, rawSettings)
 const { reaperDir } = rawSettings;
+
 settings.reaperDir = function() {
   return new Promise(async (resolve) => {
     if (reaperDir) resolve(reaperDir);
     else {
-      let path
+      let path;
+      let mess;
+      let messOnSuccess;
       const splitted = pathResolve('./').split(sep);
       const reaperId = splitted.reverse().indexOf('REAPER');
       if (reaperId >= 0) {
         path = join(...splitted.slice(reaperId).reverse());
-        process.stdout.write(c.gray(`Reaper directory path automatically set to "${path}".\nYou can change it in "${settingsPath}".\n`));
+        mess = c.gray(`Reaper directory path automatically set to "${path}".`);
+        messOnSuccess = c.gray(`You can change it in "${settingsPath}".`);
       } else {
         let validPath = false
         while (!validPath) {
           path = await prompt('Please enter your Reaper directory path: ');
-          if (existsSync(path)) validPath = true;
-          else process.stdout.write(c.red(`"${path}" not found.\n`));
+          if (existsSync(path)) {
+            validPath = true;
+            mess = c.gray(`\nReaper directory path set to "${path}".`);
+          } else cantFound(path);
         }
       }
-      rawSettings.reaperDir = path;
+      rawSettings.reaperDir = {
+        value: path,
+        mess,
+        messOnSuccess
+      };
+      process.stdout.write('\n');
       resolve(path);
     }
   })

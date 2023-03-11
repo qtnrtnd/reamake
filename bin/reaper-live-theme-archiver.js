@@ -2,7 +2,7 @@ import settings from "./modules/settings.js";
 import { missing } from "./modules/errors.js";
 import { f, date, isSubdirectory } from "./modules/utilities.js";
 import { selectMenu, header } from "./modules/components.js";
-import { mainMenuKeyPress } from "./modules/events.js";
+import { anyKeyPress, mainMenuKeyPress } from "./modules/events.js";
 
 import { readdirSync, lstatSync, readFileSync, existsSync } from "fs";
 import { extname, relative, dirname, join, sep } from "path";
@@ -19,7 +19,8 @@ const liveArchiver = function (name) {
 
     if(!existsSync(colorThemesDir)) {
       missing(colorThemesDir);
-      await mainMenuKeyPress();
+      process.stdout.write('\nPress any key to return to the main menu.')
+      await anyKeyPress();
       goToMainMenu();
       return;
     }
@@ -142,7 +143,8 @@ const liveArchiver = function (name) {
       watcher.close();
     } else {
       process.stdout.write(c.yellow(`No unpacked Reaper theme found in "${colorThemesDir}".\n`));
-      await mainMenuKeyPress();
+      process.stdout.write('\nPress any key to return to the main menu.')
+      await anyKeyPress();
     }
     goToMainMenu();
   });
