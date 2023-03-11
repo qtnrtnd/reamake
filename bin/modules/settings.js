@@ -3,7 +3,7 @@ import { prompt } from "./components.js";
 import { cantFound, cantWrite } from "./errors.js"
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { resolve as pathResolve, join, sep } from "path";
+import { join, sep } from "path";
 import c from "ansi-colors";
 
 const defaultSettings = {
